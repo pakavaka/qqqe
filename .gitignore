@@ -1,0 +1,113 @@
+package ru.tandemservice.test.task1;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+/**
+ * <h1>Задание №1</h1>
+ * Реализуйте интерфейс {@link IStringRowsListSorter}.
+ *
+ * <p>Мы будем обращать внимание в первую очередь на структуру кода и владение стандартными средствами java.</p>
+ */
+public class Task1Impl implements IStringRowsListSorter {
+
+    // ваша реализация должна работать, как singleton. даже при использовании из нескольких потоков.
+    public static final IStringRowsListSorter INSTANCE = new Task1Impl();
+
+    private Task1Impl(){
+    }
+
+    /**
+    * {@inheritDoc}
+    * Используется алгоритм гномьей сортировки https://en.wikipedia.org/wiki/Gnome_sort .
+    * Алгоритм улучшен - при нескольких подряд шагах назад происходит возврат к первому
+    * найденному неотсоритрованному объекту (последний отсортированный+1)
+    */
+    @Override
+    public void sort(final List<String[]> rows, final int columnIndex) {
+
+
+        int i = 1, lastSortedIndex=0;
+        while (i < rows.size()) {
+             if (i == 0 || IsRightOrderBySubstrings(rows.get(i - 1)[columnIndex], rows.get(i)[columnIndex])){
+                if (lastSortedIndex>i) i=lastSortedIndex+1;
+                else{
+                    lastSortedIndex=i;
+                    i++;
+                }
+            }
+            else {
+                Collections.swap(rows, i - 1, i);
+                i--;
+            }
+        }
+    }
+
+    private boolean IsRightOrder(String s1, String s2) {
+        if (s1==null) return true; //null - самый приоритетный элемент
+        else {
+            if (s2==null) return false;
+            else if (s1=="") return true;//пустая строка - второй по приоритетности элемент
+        }
+        return s1.compareTo(s2)<=0;
+    }
+
+
+    /**
+     * Проверяет правильный ли порядок у строк, используя сравнение по подстрокам
+     * @param s1 первая строка
+     * @param s2 вторая строка
+     * @return true, если первая строка должна быть перед второй, false - в противном случае
+     *
+     */
+    private boolean IsRightOrderBySubstrings(String s1, String s2) {
+        if (s1==null) return true; //null - самый приоритетный элемент
+        else {
+            if (s2==null) return false;
+            else {
+                if (s1=="") return true;//пустая строка - второй по приоритетности элемент
+                else if (s2=="") return false;
+            }
+        }
+
+        String [] s1substrings=s1.split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
+        String [] s2substrings=s2.split("(?<=\\D)(?=\\d)|(?<=\\d)(?=\\D)");
+
+        int i=0;
+        for (i=0;i<s1substrings.length && i<s2substrings.length;i++) {
+            int comparisonRes=CompareSubstrings(s1substrings[i],s2substrings[i]);
+            if (comparisonRes<0) return true;
+            else if (comparisonRes>0) return false;
+            //при равенстве сравниваем следующие
+        }
+
+        //если во второй строке подстроки кончились, а в первой - нет => меняем строки местами (порядок неправильный)
+        if (s1substrings.length>i)
+            return false;
+        // в противном случае (подстрок во второй строке больше либо строки одинаковы) - порядок правильный
+        return true;
+    }
+    /**
+     * Сравнивает подстроки
+     * @param substr1 первая подстрока
+     * @param substr2 вторая подстрока
+     * @return  положительное значение, если первая подстрока больше второй,
+     * 0 при равенстве,
+     * отрицательное - в противном случае
+     */
+    private int CompareSubstrings(String substr1,String substr2){
+
+        if (substr1.matches("\\d*") && substr2.matches("\\d*")) {
+            //сравниваем как числа
+            int s1Int = Integer.parseInt(substr1);
+            int s2Int = Integer.parseInt(substr2);
+            return s1Int-s2Int;
+        }
+        else
+            //сравниваем как строки
+            return substr1.compareTo(substr2);
+    }
+
+}
